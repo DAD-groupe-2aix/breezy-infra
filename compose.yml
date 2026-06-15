@@ -1,0 +1,52 @@
+services:
+
+  # ─── AUTH ───────────────────────────────────────────
+  auth-postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_DB=authdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d authdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: ../breezy-auth-service
+      dockerfile: Dockerfile
+    env_file:
+      - ../breezy-auth-service/.env
+    environment:
+      - DB_HOST=auth-postgres
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ─── GATEWAY ─────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: gateway
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth-service
+    networks:
+      - app-network
+
+volumes:
+  auth-db-data:
+
+networks:
+  app-network:
+    driver: bridge
