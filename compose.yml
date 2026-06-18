@@ -31,6 +31,47 @@ services:
     networks:
       - app-network
 
+  # ─── MONGO ───────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── POST ────────────────────────────────────────────
+  post-service:
+    build:
+      context: ../breezy-post-service
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/breezy_posts
+      - PORT=3002
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ─── USER ────────────────────────────────────────────
+  user-service:
+    build:
+      context: ../breezy-user-service
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/breezy_users
+      - PORT=3001
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
+
   # ─── GATEWAY ─────────────────────────────────────────
   nginx:
     image: nginx:alpine
@@ -41,11 +82,14 @@ services:
       - "8080:80"
     depends_on:
       - auth-service
+      - post-service
+      - user-service
     networks:
       - app-network
 
 volumes:
   auth-db-data:
+  mongo-data:
 
 networks:
   app-network:
