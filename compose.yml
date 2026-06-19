@@ -72,6 +72,14 @@ services:
     networks:
       - app-network
 
+  # ─── FRONT ───────────────────────────────────────────
+  front:
+    build:
+      context: ../breezy-front
+      dockerfile: Dockerfile
+    networks:
+      - app-network
+
   # ─── GATEWAY ─────────────────────────────────────────
   nginx:
     image: nginx:alpine
@@ -84,6 +92,7 @@ services:
       - auth-service
       - post-service
       - user-service
+      - front
     networks:
       - app-network
 
