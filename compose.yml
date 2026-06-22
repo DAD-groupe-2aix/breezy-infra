@@ -52,6 +52,7 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017/breezy_posts
       - PORT=3002
+      - USER_SERVICE_URL=http://user-service:3001
     depends_on:
       mongo:
         condition: service_healthy
