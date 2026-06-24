@@ -25,6 +25,8 @@ services:
       - ../breezy-auth-service/.env
     environment:
       - DB_HOST=auth-postgres
+      - USER_SERVICE_URL=http://user-service:3001
+
     depends_on:
       auth-postgres:
         condition: service_healthy
